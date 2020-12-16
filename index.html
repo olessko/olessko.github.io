@@ -40,17 +40,17 @@
 
 	var basemaps = {
 		'Warsaw buildings': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
-			layers: 'buildings',format:'image/png',transparent: true
+			layers: 'buildings',format:'image/png',transparent: true, maxZoom: 22
 		}),		
 		Topography: L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
 			layers: 'TOPO-WMS'
 		})
 	};
 
-	L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
+	//L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
 
 	var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
-    maxZoom: 20,
+    maxZoom: 22,
     subdomains:['mt0','mt1','mt2','mt3']
 	});
 	googleSat.addTo(map);
