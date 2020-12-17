@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Otovo example map</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <script src="Bing.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+
+	
+</head>
+<body>
+
+<div id='map'></div>
+
+<script type="text/javascript">
+
+	var map = L.map('map', {
+		center: [52.2654, 20.899],
+		zoom: 18
+	});
+
+	var basemaps = {
+		'Warsaw buildings': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
+			layers: 'buildings',format:'image/png',transparent: true, maxZoom: 22
+		}),
+    'Podkarpackie OSM': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
+			layers: 'buildings_osm',format:'image/png',transparent: true, maxZoom: 22
+		}),	
+		Topography: L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+			layers: 'TOPO-WMS'
+		})
+	};
+
+	//L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
+
+	var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    maxZoom: 22,
+    subdomains:['mt0','mt1','mt2','mt3']
+	});
+	googleSat.addTo(map);
+	L.control.layers(basemaps, {}, {collapsed: false}).addTo(map);
+	basemaps['Podkarpackie OSM'].addTo(map);
+
+
+</script>
+
+
+
+</body>
+</html>
