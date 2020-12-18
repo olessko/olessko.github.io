@@ -41,9 +41,12 @@
 	var basemaps = {
 		'Warsaw buildings': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
 			layers: 'buildings',format:'image/png',transparent: true, maxZoom: 22
-		}),
-    'Podkarpackie OSM': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
+		}),		
+		'Podkarpackie OSM from shapefile': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
 			layers: 'buildings_osm',format:'image/png',transparent: true, maxZoom: 22
+		}),	
+		'Podkarpackie OSM from PostgreSQL': L.tileLayer.wms('https://otovo-map-server.herokuapp.com/map?', {
+			layers: 'buildings_osm_db',format:'image/png',transparent: true, maxZoom: 22
 		}),	
 		Topography: L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
 			layers: 'TOPO-WMS'
@@ -58,7 +61,8 @@
 	});
 	googleSat.addTo(map);
 	L.control.layers(basemaps, {}, {collapsed: false}).addTo(map);
-	basemaps['Podkarpackie OSM'].addTo(map);
+	basemaps['Podkarpackie OSM from PostgreSQL'].addTo(map);
+
 
 
 </script>
