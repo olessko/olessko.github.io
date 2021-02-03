@@ -3,7 +3,7 @@
 <html>
 <head>
 	
-	<title>FEMA/Wetlands example map</title>
+	<title>Otovo example map</title>
 
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +20,15 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script> 
+
+        <script src="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.js"></script>
+        <link href="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.css" rel="stylesheet" />
+
+ 	<script src="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.js"></script>
+	<link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />       
+
+ <script src="leaflet.ajax.min.js"></script>
+
 
 	<style>
 		html, body {
@@ -42,7 +51,7 @@
 
 	var map = L.map('map', {
 		center: [32, -81],
-		zoom: 15
+		zoom: 5
 	});
 
 	var topoLayer =  L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
@@ -51,25 +60,77 @@
 	var wetlands =  L.tileLayer.wms('https://www.fws.gov/wetlands/arcgis/services/Wetlands/MapServer/WMSServer?', {
 			layers: '1',
 			transparent: true,
-			format: 'image/png' 
+			format: 'image/png',
+			opacity:0.5 
 		});
 	var topo = L.esri.tiledMapLayer({url: 'https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer',maxZoom: 20});
-	var fema = L.esri.tiledMapLayer({url: 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHLWMS/MapServer/28/',useCors: true, maxZoom: 20});
+	//var fema = L.esri.tiledMapLayer({url: 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHLWMS/MapServer/28/',useCors: true, maxZoom: 20});
 
-	var fema = L.esri.tiledMapLayer({url: 'https://coast.noaa.gov/arcgis/rest/services/FloodExposureMapper/CFEM_FEMAFloodZones/MapServer',maxZoom: 20});
+	var fema = L.esri.tiledMapLayer({url: 'https://coast.noaa.gov/arcgis/rest/services/FloodExposureMapper/CFEM_FEMAFloodZones/MapServer',maxZoom: 20,opacity:0.5});
 
+	//var state = L.esri.tiledMapLayer({url: 'https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_ACS2017/MapServer/WMSServer',maxZoom: 20,opacity:0.5});
+
+
+
+	/*var state = L.geoJson(statesData, {
+		style: style,
+		onEachFeature: onEachFeature
+	})*/
+
+	var state = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json");
+
+	var counties = L.tileLayer.wms('http://worldmap.harvard.edu/geoserver/wms?', {
+    	layers: 'geonode:US_Counties_vrw',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+
+	var zip_codes = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'ZIP Code Tabulation Areas,ZIP Code Tabulation Areas Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+	var counties = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'Counties,Counties Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+
+	var lots=L.esri.dynamicMapLayer({url: 'https://maps.dcad.org/prdwa/rest/services/Property/PropMap/MapServer',maxZoom: 20, layers:[11,29,47,65,125,135]})
 	//L.esri.basemapLayer('Topographic').addTo(map);
 
+
+
+
 	//L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
+
+	var all_layers={'Topo':topo,'FEMA Flood Hazard zones (100/500-year floodplain)':fema,'Wetlands (only visible at high zoom levels, rather slow)':wetlands,'States':state, 'Counties':counties,'ZIP Code Tabulation Areas':zip_codes,'Lots (Dallas example only)':lots};
 
 	var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
     maxZoom: 22,
     subdomains:['mt0','mt1','mt2','mt3']
 	});
 	googleSat.addTo(map);
-	L.control.layers({}, {'Topo':topo,'FEMA Flood Hazard zones (100/500-year floodplain)':fema,'Wetlands (only visible at high zoom levels)':wetlands}, {collapsed: false}).addTo(map);
+
+
+
+	L.control.layers({}, all_layers, {collapsed: false, height:700}).addTo(map);
 	L.Control.geocoder().addTo(map);
+
+	var osmGeocoder = new L.Control.OSMGeocoder();
+
+	map.addControl(osmGeocoder);
 	//basemaps['Topography'].addTo(map);
+
+L.control.opacity(
+    all_layers,
+    {
+    label: "Layers Opacity"
+    }
+).addTo(map);
 
 
 </script>
