@@ -10,6 +10,9 @@
 	
 	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
 
+			<!--  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY" async defer></script> -->
+		<script src="https://maps.googleapis.com/maps/api/js" async defer></script>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
     <script src="Bing.js"></script>
@@ -25,7 +28,10 @@
         <link href="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.css" rel="stylesheet" />
 
  	<script src="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.js"></script>
-	<link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />       
+	<link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
+	
+			<!-- 		<script type="text/javascript" src="dist/Leaflet.GoogleMutant.js"></script> -->
+		<script src="https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js"></script>       
 
  <script src="leaflet.ajax.min.js"></script>
 
@@ -102,12 +108,16 @@
 	var lots=L.esri.dynamicMapLayer({url: 'https://maps.dcad.org/prdwa/rest/services/Property/PropMap/MapServer',maxZoom: 20, layers:[11,29,47,65,125,135]})
 	//L.esri.basemapLayer('Topographic').addTo(map);
 
-
+			var trafficMutant = L.gridLayer.googleMutant({
+				maxZoom: 24,
+				type: "roadmap",
+			});
+			trafficMutant.addGoogleLayer("TrafficLayer");
 
 
 	//L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
 
-	var all_layers={'Topo':topo,'FEMA Flood Hazard zones (100/500-year floodplain)':fema,'Wetlands (only visible at high zoom levels, rather slow)':wetlands,'States':state, 'Counties':counties,'ZIP Code Tabulation Areas':zip_codes,'Lots (Dallas example only)':lots};
+	var all_layers={'Topo':topo,'FEMA Flood Hazard zones (100/500-year floodplain)':fema,'Wetlands (only visible at high zoom levels, rather slow)':wetlands,'States':state, 'Counties':counties,'ZIP Code Tabulation Areas':zip_codes,'Lots (Dallas example only)':lots,'Google traffic': trafficMutant};
 
 	var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
     maxZoom: 22,
