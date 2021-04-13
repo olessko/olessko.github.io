@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Map</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIkxbS4CQF0fs5vLpbOdK4aQwvIo0qMAU" async defer></script>
+	<!--	<script src="https://maps.googleapis.com/maps/api/js" async defer></script>-->
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+
+      <!-- Load Esri Leaflet from CDN -->
+  <script src="https://unpkg.com/esri-leaflet@2.5.3/dist/esri-leaflet.js"
+    integrity="sha512-K0Vddb4QdnVOAuPJBHkgrua+/A9Moyv8AQEWi0xndQ+fqbRfAFd47z4A9u1AW/spLO0gEaiE1z98PK1gl5mC5Q=="
+    crossorigin=""></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script> 
+
+        <script src="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.js"></script>
+        <link href="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.css" rel="stylesheet" />
+
+ 	<script src="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.js"></script>
+	<link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
+	
+			<!-- 		<script type="text/javascript" src="dist/Leaflet.GoogleMutant.js"></script> -->
+		<script src="https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js"></script>       
+
+ <script src="https://mrbuyer.com/wp-content/themes/twentytwenty/leaflet.ajax.min.js"></script>
+
+ <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.0.0/dist/geosearch.css"/>
+ <!--<script src="https://unpkg.com/leaflet-geosearch@3.0.0/dist/geosearch.umd.js"></script>-->
+<script src="https://unpkg.com/leaflet-geosearch@latest/dist/bundle.min.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			height: 100%;
+		}
+		.stateLabel{
+  background: rgba(255, 255, 255, 0);
+  border:0;
+  border-radius:0px;
+  box-shadow: 0 0px 0px;
+  font-size: 20px;
+  color: white;
+
+}
+	</style>
+
+	
+</head>
+<body>
+
+<div id='map'></div>
+
+<script type="text/javascript">
+
+	var map = L.map('map', {
+		center: [32, -81],
+		zoom: 6,
+		maxZoom: 11
+	});
+
+	var topoLayer =  L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+			layers: 'TOPO-WMS'
+		});
+	var wetlands =  L.tileLayer.wms('https://www.fws.gov/wetlands/arcgis/services/Wetlands/MapServer/WMSServer?', {
+			layers: '1',
+			transparent: true,
+			format: 'image/png',
+			opacity:0.5 
+		});
+	var topo = L.esri.tiledMapLayer({url: 'https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer',maxZoom: 20});
+	//var fema = L.esri.tiledMapLayer({url: 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHLWMS/MapServer/28/',useCors: true, maxZoom: 20});
+
+	var fema = L.esri.tiledMapLayer({url: 'https://coast.noaa.gov/arcgis/rest/services/FloodExposureMapper/CFEM_FEMAFloodZones/MapServer',maxZoom: 20,opacity:0.5});
+
+	//var state = L.esri.tiledMapLayer({url: 'https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_ACS2017/MapServer/WMSServer',maxZoom: 20,opacity:0.5});
+
+
+
+	/*var state = L.geoJson(statesData, {
+		style: style,
+		onEachFeature: onEachFeature
+	})*/
+
+	var state = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json",{
+    onEachFeature: function (feature, layer) {
+        layer.bindTooltip(feature.properties.name.toString(), {permanent: true, noHide: true, direction:'center', className: 'stateLabel' }).openTooltip();
+    }
+    });
+
+
+function areaStyle(){
+  return {
+    fillColor: '#00FF00',
+    weight: 1,
+    opacity: 1,
+    color: '#2ECC71',
+    dashArray: '3',
+    fillOpacity: 0.5
+ }
+};
+
+	var green = new L.GeoJSON.AJAX("https://olessko.github.io/data/bigGreen_NYC.geojson",{style: areaStyle});
+	green.on('data:loaded', function() {
+       map.fitBounds(green.getBounds())
+   })
+
+/*
+	var state = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'States,States Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});*/
+
+	var counties = L.tileLayer.wms('https://worldmap.harvard.edu/geoserver/wms?', {
+    	layers: 'geonode:US_Counties_vrw',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+
+	var zip_codes = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'ZIP Code Tabulation Areas,ZIP Code Tabulation Areas Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+	var counties = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'Counties,Counties Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+
+
+	var density=L.esri.dynamicMapLayer({url: 'https://atlasmaps.esri.com/arcgis/rest/services/Esri/USA_Population_Density/MapServer',maxZoom: 20, layers:[6,12],opacity:0.5 });
+	//L.esri.basemapLayer('Topographic').addTo(map);
+
+			var trafficMutant = L.gridLayer.googleMutant({
+				maxZoom: 24,
+				type: "roadmap",
+			});
+			trafficMutant.addGoogleLayer("TrafficLayer");
+
+
+	//L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
+
+	var all_layers={'Green areas':green,'States':state, 'Population density':density};
+
+	var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    maxZoom: 22,
+    subdomains:['mt0','mt1','mt2','mt3']
+	});
+	googleSat.addTo(map);
+	green.addTo(map);
+
+
+	//L.control.layers({}, all_layers, {collapsed: false, height:700}).addTo(map);
+	//L.Control.geocoder().addTo(map);
+
+
+
+
+
+
+	//var osmGeocoder = new L.Control.OSMGeocoder();
+
+	//map.addControl(osmGeocoder);
+	//var osmGeocoder = new L.Control.OSMGeocoder();
+	//map.addControl(googleGeocoder);
+	//basemaps['Topography'].addTo(map);
+
+//map.fitBounds(green.getBounds());
+
+
+</script>
+
+
+
+</body>
+</html>
