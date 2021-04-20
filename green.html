@@ -1,0 +1,710 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Map</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+
+      <!-- Load Esri Leaflet from CDN -->
+  <script src="https://unpkg.com/esri-leaflet@2.5.3/dist/esri-leaflet.js"
+    integrity="sha512-K0Vddb4QdnVOAuPJBHkgrua+/A9Moyv8AQEWi0xndQ+fqbRfAFd47z4A9u1AW/spLO0gEaiE1z98PK1gl5mC5Q=="
+    crossorigin=""></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script> 
+
+        <script src="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.js"></script>
+        <link href="https://dayjournal.github.io/Leaflet.Control.Opacity/plugin/Leaflet.Control.Opacity/dist/L.Control.Opacity.css" rel="stylesheet" />
+
+ 	<script src="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.js"></script>
+	<link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
+	
+
+
+ <script src="https://mrbuyer.com/wp-content/themes/twentytwenty/leaflet.ajax.min.js"></script>
+
+
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			height: 100%;
+		}
+		.stateLabel{
+  background: rgba(255, 255, 255, 0);
+  border:0;
+  border-radius:0px;
+  box-shadow: 0 0px 0px;
+  font-size: 20px;
+  color: white;
+
+}
+	</style>
+
+	
+</head>
+<body>
+
+<div id='map'></div>
+
+<script type="text/javascript">
+
+	var map = L.map('map', {
+		center: [32, -81],
+		zoom: 6,
+		maxZoom: 11
+	});
+
+	var topoLayer =  L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+			layers: 'TOPO-WMS'
+		});
+	var wetlands =  L.tileLayer.wms('https://www.fws.gov/wetlands/arcgis/services/Wetlands/MapServer/WMSServer?', {
+			layers: '1',
+			transparent: true,
+			format: 'image/png',
+			opacity:0.5 
+		});
+	var topo = L.esri.tiledMapLayer({url: 'https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer',maxZoom: 20});
+	//var fema = L.esri.tiledMapLayer({url: 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHLWMS/MapServer/28/',useCors: true, maxZoom: 20});
+
+	var fema = L.esri.tiledMapLayer({url: 'https://coast.noaa.gov/arcgis/rest/services/FloodExposureMapper/CFEM_FEMAFloodZones/MapServer',maxZoom: 20,opacity:0.5});
+
+	//var state = L.esri.tiledMapLayer({url: 'https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_ACS2017/MapServer/WMSServer',maxZoom: 20,opacity:0.5});
+
+
+
+	/*var state = L.geoJson(statesData, {
+		style: style,
+		onEachFeature: onEachFeature
+	})*/
+
+	var state = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json",{
+    onEachFeature: function (feature, layer) {
+        layer.bindTooltip(feature.properties.name.toString(), {permanent: true, noHide: true, direction:'center', className: 'stateLabel' }).openTooltip();
+    }
+    });
+
+
+function areaStyle(){
+  return {
+    fillColor: '#00FF00',
+    weight: 1,
+    opacity: 1,
+    color: '#2ECC71',
+    dashArray: '3',
+    fillOpacity: 0.5
+ }
+};
+
+	var green = new L.GeoJSON.AJAX("https://olessko.github.io/data/bigGreen_NYC.geojson",{style: areaStyle});
+	green.on('data:loaded', function() {
+       map.fitBounds(green.getBounds())
+   })
+
+/*
+	var state = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'States,States Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});*/
+
+	var counties = L.tileLayer.wms('https://worldmap.harvard.edu/geoserver/wms?', {
+    	layers: 'geonode:US_Counties_vrw',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+
+	var zip_codes = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'ZIP Code Tabulation Areas,ZIP Code Tabulation Areas Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+	var counties = L.tileLayer.wms('https://tigerweb.geo.census.gov/arcgis/services/TIGERweb/tigerWMS_Census2010/MapServer/WmsServer?', {
+    	layers: 'Counties,Counties Labels',
+    	tiled:true,
+    	transparent: true,
+    	format: 'image/png'
+	});
+
+
+	var density=L.esri.dynamicMapLayer({url: 'https://atlasmaps.esri.com/arcgis/rest/services/Esri/USA_Population_Density/MapServer',maxZoom: 20, layers:[6,12],opacity:0.5 });
+	//L.esri.basemapLayer('Topographic').addTo(map);
+
+
+
+	//L.bingLayer('AjcnuMWs7_fWlWUWeN4a9xz5i-rw4Yay9picObEJUSe5egG0MX39ImOyEorQpefL').addTo(map);
+
+	var all_layers={'Green areas':green,'States':state, 'Population density':density};
+
+	var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    maxZoom: 22,
+    subdomains:['mt0','mt1','mt2','mt3']
+	});
+	googleSat.addTo(map);
+	green.addTo(map);
+
+
+var legend = L.control({position: 'topright'});
+legend.onAdd = function (map) {
+var div = L.DomUtil.create('div', 'info legend');
+div.innerHTML = '<select id="city_select">'+`<option>Abilene, TX</option>
+<option>Akron, OH</option>
+<option>Alameda, CA</option>
+<option>Albany, GA</option>
+<option>Albany, NY</option>
+<option>Albuquerque, NM</option>
+<option>Alexandria, VA</option>
+<option>Alhambra, CA</option>
+<option>Allen, TX</option>
+<option>Allentown, PA</option>
+<option>Amarillo, TX</option>
+<option>Anaheim, CA</option>
+<option>Ann Arbor, MI</option>
+<option>Antioch, CA</option>
+<option>Apple Valley, CA</option>
+<option>Appleton, WI</option>
+<option>Arlington, TX</option>
+<option>Arlington Heights, IL</option>
+<option>Arvada, CO</option>
+<option>Asheville, NC</option>
+<option>Athens, GA</option>
+<option>Atlanta, GA</option>
+<option>Auburn, WA</option>
+<option>Augusta, GA</option>
+<option>Aurora, CO</option>
+<option>Aurora, IL</option>
+<option>Austin, TX</option>
+<option>Avondale, AZ</option>
+<option>Bakersfield, CA</option>
+<option>Baldwin Park, CA</option>
+<option>Baltimore, MD</option>
+<option>Baton Rouge, LA</option>
+<option>Baytown, TX</option>
+<option>Beaumont, TX</option>
+<option>Beaverton, OR</option>
+<option>Bellevue, WA</option>
+<option>Bellflower, CA</option>
+<option>Bellingham, WA</option>
+<option>Bend, OR</option>
+<option>Berkeley, CA</option>
+<option>Bethlehem, PA</option>
+<option>Billings, MT</option>
+<option>Birmingham, AL</option>
+<option>Bloomington, IL</option>
+<option>Bloomington, IN</option>
+<option>Bloomington, MN</option>
+<option>Boca Raton, FL</option>
+<option>Boise City, ID</option>
+<option>Bolingbrook, IL</option>
+<option>Boston, MA</option>
+<option>Boulder, CO</option>
+<option>Boynton Beach, FL</option>
+<option>Bridgeport, CT</option>
+<option>Brockton, MA</option>
+<option>Broken Arrow, OK</option>
+<option>Brooklyn Park, MN</option>
+<option>Brownsville, TX</option>
+<option>Bryan, TX</option>
+<option>Buena Park, CA</option>
+<option>Buffalo, NY</option>
+<option>Burbank, CA</option>
+<option>Burlington, VT</option>
+<option>Cambridge, MA</option>
+<option>Camden, NJ</option>
+<option>Canton, OH</option>
+<option>Cape Coral, FL</option>
+<option>Carlsbad, CA</option>
+<option>Carmel, IN</option>
+<option>Carrollton, TX</option>
+<option>Carson, CA</option>
+<option>Cary, NC</option>
+<option>Cedar Rapids, IA</option>
+<option>Centennial, CO</option>
+<option>Champaign, IL</option>
+<option>Chandler, AZ</option>
+<option>Charleston, SC</option>
+<option>Charleston, WV</option>
+<option>Charlotte, NC</option>
+<option>Chattanooga, TN</option>
+<option>Chesapeake, VA</option>
+<option>Cheyenne, WY</option>
+<option>Chicago, IL</option>
+<option>Chico, CA</option>
+<option>Chino, CA</option>
+<option>Chino Hills, CA</option>
+<option>Chula Vista, CA</option>
+<option>Cicero, IL</option>
+<option>Cincinnati, OH</option>
+<option>Citrus Heights, CA</option>
+<option>Clarksville, TN</option>
+<option>Clearwater, FL</option>
+<option>Cleveland, OH</option>
+<option>Clifton, NJ</option>
+<option>Clovis, CA</option>
+<option>College Station, TX</option>
+<option>Colorado Springs, CO</option>
+<option>Columbia, MO</option>
+<option>Columbia, SC</option>
+<option>Columbus, GA</option>
+<option>Columbus, OH</option>
+<option>Compton, CA</option>
+<option>Concord, CA</option>
+<option>Concord, NC</option>
+<option>Coral Springs, FL</option>
+<option>Corona, CA</option>
+<option>Corpus Christi, TX</option>
+<option>Costa Mesa, CA</option>
+<option>Cranston, RI</option>
+<option>Dallas, TX</option>
+<option>Daly City, CA</option>
+<option>Danbury, CT</option>
+<option>Davenport, IA</option>
+<option>Davie, FL</option>
+<option>Dayton, OH</option>
+<option>Dearborn, MI</option>
+<option>Decatur, IL</option>
+<option>Deerfield Beach, FL</option>
+<option>Deltona, FL</option>
+<option>Denton, TX</option>
+<option>Denver, CO</option>
+<option>Des Moines, IA</option>
+<option>Detroit, MI</option>
+<option>Downey, CA</option>
+<option>Duluth, MN</option>
+<option>Durham, NC</option>
+<option>Edinburg, TX</option>
+<option>Edmond, OK</option>
+<option>El Cajon, CA</option>
+<option>El Monte, CA</option>
+<option>El Paso, TX</option>
+<option>Elgin, IL</option>
+<option>Elizabeth, NJ</option>
+<option>Elk Grove, CA</option>
+<option>Erie, PA</option>
+<option>Escondido, CA</option>
+<option>Eugene, OR</option>
+<option>Evanston, IL</option>
+<option>Evansville, IN</option>
+<option>Everett, WA</option>
+<option>Fairfield, CA</option>
+<option>Fall River, MA</option>
+<option>Fargo, ND</option>
+<option>Farmington Hills, MI</option>
+<option>Fayetteville, AR</option>
+<option>Fayetteville, NC</option>
+<option>Federal Way, WA</option>
+<option>Fishers, IN</option>
+<option>Flint, MI</option>
+<option>Folsom, CA</option>
+<option>Fontana, CA</option>
+<option>Fort Collins, CO</option>
+<option>Fort Lauderdale, FL</option>
+<option>Fort Smith, AR</option>
+<option>Fort Wayne, IN</option>
+<option>Fort Worth, TX</option>
+<option>Fremont, CA</option>
+<option>Fresno, CA</option>
+<option>Frisco, TX</option>
+<option>Fullerton, CA</option>
+<option>Gainesville, FL</option>
+<option>Garden Grove, CA</option>
+<option>Garland, TX</option>
+<option>Gary, IN</option>
+<option>Gastonia, NC</option>
+<option>Gilbert, AZ</option>
+<option>Glendale, AZ</option>
+<option>Glendale, CA</option>
+<option>Grand Prairie, TX</option>
+<option>Grand Rapids, MI</option>
+<option>Greeley, CO</option>
+<option>Green Bay, WI</option>
+<option>Greensboro, NC</option>
+<option>Greenville, NC</option>
+<option>Gresham, OR</option>
+<option>Gulfport, MS</option>
+<option>Hammond, IN</option>
+<option>Hampton, VA</option>
+<option>Hartford, CT</option>
+<option>Hawthorne, CA</option>
+<option>Hayward, CA</option>
+<option>Hemet, CA</option>
+<option>Henderson, NV</option>
+<option>Hesperia, CA</option>
+<option>Hialeah, FL</option>
+<option>High Point, NC</option>
+<option>Hillsboro, OR</option>
+<option>Hollywood, FL</option>
+<option>Hoover, AL</option>
+<option>Houston, TX</option>
+<option>Huntington Beach, CA</option>
+<option>Huntsville, AL</option>
+<option>Independence, MO</option>
+<option>Indianapolis, IN</option>
+<option>Indio, CA</option>
+<option>Inglewood, CA</option>
+<option>Iowa City, IA</option>
+<option>Irvine, CA</option>
+<option>Irving, TX</option>
+<option>Jackson, MS</option>
+<option>Jacksonville, FL</option>
+<option>Jacksonville, NC</option>
+<option>Jersey City, NJ</option>
+<option>Johns Creek, GA</option>
+<option>Joliet, IL</option>
+<option>Jonesboro, AR</option>
+<option>Kalamazoo, MI</option>
+<option>Kansas City, KS</option>
+<option>Kansas City, MO</option>
+<option>Kenner, LA</option>
+<option>Kennewick, WA</option>
+<option>Kenosha, WI</option>
+<option>Kent, WA</option>
+<option>Killeen, TX</option>
+<option>Knoxville, TN</option>
+<option>Lafayette, IN</option>
+<option>Lafayette, LA</option>
+<option>Lake Charles, LA</option>
+<option>Lake Forest, CA</option>
+<option>Lakeland, FL</option>
+<option>Lakewood, CA</option>
+<option>Lakewood, CO</option>
+<option>Lancaster, CA</option>
+<option>Lansing, MI</option>
+<option>Laredo, TX</option>
+<option>Largo, FL</option>
+<option>Las Cruces, NM</option>
+<option>Las Vegas, NV</option>
+<option>Lauderhill, FL</option>
+<option>Lawrence, KS</option>
+<option>Lawrence, MA</option>
+<option>Lawton, OK</option>
+<option>Layton, UT</option>
+<option>League City, TX</option>
+<option>Lee's Summit, MO</option>
+<option>Lewisville, TX</option>
+<option>Lexington, KY</option>
+<option>Lincoln, NE</option>
+<option>Little Rock, AR</option>
+<option>Livermore, CA</option>
+<option>Livonia, MI</option>
+<option>Long Beach, CA</option>
+<option>Longmont, CO</option>
+<option>Longview, TX</option>
+<option>Los Angeles, CA</option>
+<option>Louisville, KY</option>
+<option>Loveland, CO</option>
+<option>Lowell, MA</option>
+<option>Lubbock, TX</option>
+<option>Lynchburg, VA</option>
+<option>Lynn, MA</option>
+<option>Lynwood, CA</option>
+<option>Macon, GA</option>
+<option>Madison, WI</option>
+<option>Manchester, NH</option>
+<option>Manteca, CA</option>
+<option>McAllen, TX</option>
+<option>McKinney, TX</option>
+<option>Medford, OR</option>
+<option>Melbourne, FL</option>
+<option>Memphis, TN</option>
+<option>Menifee, CA</option>
+<option>Merced, CA</option>
+<option>Meridian, ID</option>
+<option>Mesa, AZ</option>
+<option>Mesquite, TX</option>
+<option>Miami, FL</option>
+<option>Miami Beach, FL</option>
+<option>Miami Gardens, FL</option>
+<option>Midland, TX</option>
+<option>Milpitas, CA</option>
+<option>Milwaukee, WI</option>
+<option>Minneapolis, MN</option>
+<option>Miramar, FL</option>
+<option>Mission, TX</option>
+<option>Mission Viejo, CA</option>
+<option>Missoula, MT</option>
+<option>Missouri City, TX</option>
+<option>Mobile, AL</option>
+<option>Modesto, CA</option>
+<option>Montgomery, AL</option>
+<option>Moreno Valley, CA</option>
+<option>Mount Pleasant, SC</option>
+<option>Mount Vernon, NY</option>
+<option>Mountain View, CA</option>
+<option>Muncie, IN</option>
+<option>Murfreesboro, TN</option>
+<option>Murrieta, CA</option>
+<option>Nampa, ID</option>
+<option>Napa, CA</option>
+<option>Naperville, IL</option>
+<option>Nashua, NH</option>
+<option>Nashville, TN</option>
+<option>New Bedford, MA</option>
+<option>New Britain, CT</option>
+<option>New Haven, CT</option>
+<option>New Orleans, LA</option>
+<option>New Rochelle, NY</option>
+<option>New York, NY</option>
+<option>Newark, NJ</option>
+<option>Newport Beach, CA</option>
+<option>Newport News, VA</option>
+<option>Newton, MA</option>
+<option>Norfolk, VA</option>
+<option>Norman, OK</option>
+<option>North Charleston, SC</option>
+<option>North Las Vegas, NV</option>
+<option>Norwalk, CA</option>
+<option>Norwalk, CT</option>
+<option>O'Fallon, MO</option>
+<option>Oakland, CA</option>
+<option>Oceanside, CA</option>
+<option>Odessa, TX</option>
+<option>Ogden, UT</option>
+<option>Oklahoma City, OK</option>
+<option>Olathe, KS</option>
+<option>Omaha, NE</option>
+<option>Ontario, CA</option>
+<option>Orange, CA</option>
+<option>Orem, UT</option>
+<option>Orlando, FL</option>
+<option>Overland Park, KS</option>
+<option>Oxnard, CA</option>
+<option>Palatine, IL</option>
+<option>Palm Bay, FL</option>
+<option>Palm Coast, FL</option>
+<option>Palmdale, CA</option>
+<option>Parma, OH</option>
+<option>Pasadena, CA</option>
+<option>Pasadena, TX</option>
+<option>Passaic, NJ</option>
+<option>Paterson, NJ</option>
+<option>Pawtucket, RI</option>
+<option>Pearland, TX</option>
+<option>Pembroke Pines, FL</option>
+<option>Peoria, AZ</option>
+<option>Peoria, IL</option>
+<option>Perris, CA</option>
+<option>Pharr, TX</option>
+<option>Philadelphia, PA</option>
+<option>Phoenix, AZ</option>
+<option>Pittsburgh, PA</option>
+<option>Plano, TX</option>
+<option>Plantation, FL</option>
+<option>Pleasanton, CA</option>
+<option>Plymouth, MN</option>
+<option>Pomona, CA</option>
+<option>Pompano Beach, FL</option>
+<option>Port St. Lucie, FL</option>
+<option>Portland, ME</option>
+<option>Portland, OR</option>
+<option>Portsmouth, VA</option>
+<option>Providence, RI</option>
+<option>Provo, UT</option>
+<option>Pueblo, CO</option>
+<option>Quincy, MA</option>
+<option>Racine, WI</option>
+<option>Raleigh, NC</option>
+<option>Rancho Cucamonga, CA</option>
+<option>Rapid City, SD</option>
+<option>Reading, PA</option>
+<option>Redding, CA</option>
+<option>Redlands, CA</option>
+<option>Redondo Beach, CA</option>
+<option>Redwood City, CA</option>
+<option>Reno, NV</option>
+<option>Renton, WA</option>
+<option>Rialto, CA</option>
+<option>Richardson, TX</option>
+<option>Richmond, CA</option>
+<option>Richmond, VA</option>
+<option>Rio Rancho, NM</option>
+<option>Riverside, CA</option>
+<option>Roanoke, VA</option>
+<option>Rochester, MN</option>
+<option>Rochester, NY</option>
+<option>Rochester Hills, MI</option>
+<option>Rock Hill, SC</option>
+<option>Rockford, IL</option>
+<option>Roseville, CA</option>
+<option>Roswell, GA</option>
+<option>Round Rock, TX</option>
+<option>Sacramento, CA</option>
+<option>Salem, OR</option>
+<option>Salinas, CA</option>
+<option>Salt Lake City, UT</option>
+<option>San Angelo, TX</option>
+<option>San Antonio, TX</option>
+<option>San Bernardino, CA</option>
+<option>San Buenaventura (Ventura), CA</option>
+<option>San Diego, CA</option>
+<option>San Francisco, CA</option>
+<option>San Jose, CA</option>
+<option>San Leandro, CA</option>
+<option>San Marcos, CA</option>
+<option>San Mateo, CA</option>
+<option>San Ramon, CA</option>
+<option>Sandy, UT</option>
+<option>Sandy Springs, GA</option>
+<option>Santa Ana, CA</option>
+<option>Santa Barbara, CA</option>
+<option>Santa Clara, CA</option>
+<option>Santa Clarita, CA</option>
+<option>Santa Fe, NM</option>
+<option>Santa Maria, CA</option>
+<option>Santa Monica, CA</option>
+<option>Santa Rosa, CA</option>
+<option>Savannah, GA</option>
+<option>Schaumburg, IL</option>
+<option>Schenectady, NY</option>
+<option>Scottsdale, AZ</option>
+<option>Scranton, PA</option>
+<option>Seattle, WA</option>
+<option>Shreveport, LA</option>
+<option>Simi Valley, CA</option>
+<option>Sioux City, IA</option>
+<option>Sioux Falls, SD</option>
+<option>Somerville, MA</option>
+<option>South Bend, IN</option>
+<option>South Gate, CA</option>
+<option>Southfield, MI</option>
+<option>Sparks, NV</option>
+<option>Spokane, WA</option>
+<option>Spokane Valley, WA</option>
+<option>Springdale, AR</option>
+<option>Springfield, IL</option>
+<option>Springfield, MA</option>
+<option>Springfield, MO</option>
+<option>St. George, UT</option>
+<option>St. Joseph, MO</option>
+<option>St. Louis, MO</option>
+<option>St. Paul, MN</option>
+<option>St. Petersburg, FL</option>
+<option>Stamford, CT</option>
+<option>Sterling Heights, MI</option>
+<option>Stockton, CA</option>
+<option>Suffolk, VA</option>
+<option>Sugar Land, TX</option>
+<option>Sunnyvale, CA</option>
+<option>Sunrise, FL</option>
+<option>Surprise, AZ</option>
+<option>Syracuse, NY</option>
+<option>Tacoma, WA</option>
+<option>Tallahassee, FL</option>
+<option>Tampa, FL</option>
+<option>Temecula, CA</option>
+<option>Tempe, AZ</option>
+<option>Thornton, CO</option>
+<option>Thousand Oaks, CA</option>
+<option>Toledo, OH</option>
+<option>Topeka, KS</option>
+<option>Torrance, CA</option>
+<option>Tracy, CA</option>
+<option>Trenton, NJ</option>
+<option>Troy, MI</option>
+<option>Tucson, AZ</option>
+<option>Tulsa, OK</option>
+<option>Turlock, CA</option>
+<option>Tuscaloosa, AL</option>
+<option>Tustin, CA</option>
+<option>Tyler, TX</option>
+<option>Union City, CA</option>
+<option>Union City, NJ</option>
+<option>Upland, CA</option>
+<option>Vacaville, CA</option>
+<option>Vallejo, CA</option>
+<option>Vancouver, WA</option>
+<option>Victorville, CA</option>
+<option>Virginia Beach, VA</option>
+<option>Visalia, CA</option>
+<option>Vista, CA</option>
+<option>Waco, TX</option>
+<option>Warner Robins, GA</option>
+<option>Warren, MI</option>
+<option>Warwick, RI</option>
+<option>Washington, DC</option>
+<option>Waterbury, CT</option>
+<option>Waterloo, IA</option>
+<option>Waukegan, IL</option>
+<option>Waukesha, WI</option>
+<option>West Covina, CA</option>
+<option>West Jordan, UT</option>
+<option>West Palm Beach, FL</option>
+<option>West Valley City, UT</option>
+<option>Westland, MI</option>
+<option>Westminster, CA</option>
+<option>Westminster, CO</option>
+<option>Whittier, CA</option>
+<option>Wichita, KS</option>
+<option>Wichita Falls, TX</option>
+<option>Wilmington, DE</option>
+<option>Wilmington, NC</option>
+<option>Winston-Salem, NC</option>
+<option>Worcester, MA</option>
+<option>Wyoming, MI</option>
+<option>Yakima, WA</option>
+<option>Yonkers, NY</option>
+<option>Youngstown, OH</option>
+<option>Yuma, AZ</option></select>`;
+div.firstChild.onmousedown = div.firstChild.ondblclick = L.DomEvent.stopPropagation;
+
+L.DomEvent.on(div,'change',function(e){
+     var selected_city =e.target.value.replace(', ','-').replace('(','').replace(')','').replace(' ','_');
+     var json_name=selected_city+'.geojson'
+     console.log(selected_city);
+     map.removeLayer(green);
+     var green = new L.GeoJSON.AJAX("https://olessko.github.io/data/"+json_name,{style: areaStyle});
+	green.on('data:loaded', function() {
+       map.fitBounds(green.getBounds())
+   });
+	green.addTo(map);
+
+});
+
+return div;
+};
+legend.addTo(map);
+
+
+
+
+	//L.control.layers({}, all_layers, {collapsed: false, height:700}).addTo(map);
+	//L.Control.geocoder().addTo(map);
+
+
+
+
+
+
+	//var osmGeocoder = new L.Control.OSMGeocoder();
+
+	//map.addControl(osmGeocoder);
+	//var osmGeocoder = new L.Control.OSMGeocoder();
+	//map.addControl(googleGeocoder);
+	//basemaps['Topography'].addTo(map);
+
+//map.fitBounds(green.getBounds());
+
+
+</script>
+
+
+
+</body>
+</html>
