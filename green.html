@@ -672,7 +672,7 @@ div.firstChild.onmousedown = div.firstChild.ondblclick = L.DomEvent.stopPropagat
 
 L.DomEvent.on(div,'change',function(e){
      var selected_city =e.target.value.replace(', ','-').replace('(','').replace(')','').replace(' ','_');
-     var json_name='https://olessko.github.io/data/big_'+selected_city+'.geojson';
+     var json_name='https://olessko.github.io/data/big_green/big_'+selected_city+'.geojson';
      window.location.href = window.location.pathname + '?src='+json_name;
 
 
