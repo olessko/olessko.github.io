@@ -110,7 +110,13 @@ function areaStyle(){
  }
 };
 
-	var green = new L.GeoJSON.AJAX("https://olessko.github.io/data/bigGreen_NYC.geojson",{style: areaStyle});
+
+
+var url = new URL(window.location.href);
+var green_src = url.searchParams.get("src");
+
+
+	var green = new L.GeoJSON.AJAX(green_src,{style: areaStyle});
 	green.on('data:loaded', function() {
        map.fitBounds(green.getBounds())
    })
@@ -666,14 +672,9 @@ div.firstChild.onmousedown = div.firstChild.ondblclick = L.DomEvent.stopPropagat
 
 L.DomEvent.on(div,'change',function(e){
      var selected_city =e.target.value.replace(', ','-').replace('(','').replace(')','').replace(' ','_');
-     var json_name=selected_city+'.geojson'
-     console.log(selected_city);
-     map.removeLayer(green);
-     var green = new L.GeoJSON.AJAX("https://olessko.github.io/data/"+json_name,{style: areaStyle});
-	green.on('data:loaded', function() {
-       map.fitBounds(green.getBounds())
-   });
-	green.addTo(map);
+     var json_name='https://olessko.github.io/data/big_'+selected_city+'.geojson';
+     window.location.href = window.location.pathname + '?src='+json_name;
+
 
 });
 
